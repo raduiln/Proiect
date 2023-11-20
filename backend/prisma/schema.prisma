@@ -1,0 +1,113 @@
+// Define the datasource for the PostgreSQL database
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+// Define the User model
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  password     String
+  role         String      @default("STUDENT")
+  name     String
+  surname  String
+  email    String
+  phone    String @default("")
+  address  String @default("")
+
+  student     Student?
+  teacher     Teacher?
+}
+
+
+model Student {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int       @unique
+  classes   Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId   Int
+  grades    Grade[]
+  absences  Absence[]
+  schedules Schedule[]
+}
+
+model Teacher {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int       @unique
+  class    Class?
+  subjects  Subject[]
+  grades    Grade[]
+  schedules Schedule[]
+}
+
+// Define the Subject model
+model Subject {
+  id        Int       @id @default(autoincrement())
+  name      String
+  teacher   Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  grades    Grade[]
+  teacherId Int
+  absences  Absence[]
+  schedules Schedule[]
+}
+
+// Define the Grade model
+model Grade {
+  id        Int      @id @default(autoincrement())
+  value     Float
+  date      DateTime
+  studentId Int
+  subjectId Int
+  teacherId Int
+  classId   Int
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  class    Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+// Define the Absence model
+model Absence {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  reason    String
+  status    String
+  studentId Int
+  subjectId Int
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
+// Define the Schedule model
+model Schedule {
+  id        Int      @id @default(autoincrement())
+  day       String
+  startHour String
+  endHour   String
+  subjectId Int
+  teacherId Int
+  studentId Int
+  classId   Int
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+// Define the Class model
+model Class {
+  id           Int      @id @default(autoincrement())
+  name         String
+  teacherId    Int      @unique
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  schedule     Schedule[]
+  students     Student[]
+  grades       Grade[]
+}
